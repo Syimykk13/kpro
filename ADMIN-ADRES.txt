@@ -1,0 +1,12 @@
+﻿KASSA-PRO Admin
+
+Na etom kompyutere:
+http://localhost:5173/admin/
+
+S telefona v toy zhe seti otkroyte:
+http://192.168.0.3:5173/admin/
+
+Esli telefon ne otkryvaet adres:
+1. V Windows razreshite Node.js/PowerShell vo vhodiaschih podklyucheniyah firewall.
+2. Set Windows dolzhna byt Private/Chastnaya, ne Public/Obschedostupnaya.
+3. V routere otklyuchite izolaciyu Wi-Fi klientov/AP isolation.

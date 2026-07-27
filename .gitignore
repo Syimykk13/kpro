@@ -1,0 +1,50 @@
+node_modules/
+.tools/
+
+# Build output
+dist/
+dist-electron/
+release/
+.receipt-layout-smoke/
+tmp/
+
+# Local runtime data and databases
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*.db-shm
+*.db-wal
+*.bak
+*.tmp
+
+# Logs
+*.log
+*.out
+*.err
+
+# Secrets and certificates
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+*.crt
+*.cer
+
+# Transfer/build artifacts
+*.zip
+*.7z
+*.rar
+*.exe
+
+# Local import/source data
+*.xlsx
+*.xls
+*.csv
+
+# OS/editor noise
+.DS_Store
+Thumbs.db

@@ -1,0 +1,103 @@
+﻿{
+  "version": 1,
+  "updatedAt": "2026-05-05T09:00:00.000Z",
+  "accounts": [
+    {
+      "id": "acc-urozhai",
+      "name": "Магазин Урожай",
+      "ownerName": "Алексей Иванов",
+      "activationKey": {
+        "key": "UROJ-2026-0001",
+        "status": "active",
+        "generatedAt": "2026-05-05T09:00:00.000Z"
+      },
+      "categories": [
+        { "id": "grocery", "name": "Бакалея", "icon": "ShoppingBasket", "color": "#ff9f1c", "sortOrder": 1 },
+        { "id": "drinks", "name": "Напитки", "icon": "CupSoda", "color": "#7c5ccf", "sortOrder": 2 },
+        { "id": "dairy", "name": "Молочное", "icon": "Milk", "color": "#3b82f6", "sortOrder": 3 },
+        { "id": "produce", "name": "Овощи / фрукты", "icon": "Apple", "color": "#2fbf71", "sortOrder": 4 },
+        { "id": "bread", "name": "Хлеб", "icon": "Croissant", "color": "#f59e0b", "sortOrder": 5 }
+      ],
+      "products": [
+        { "id": "bread-borodino", "categoryId": "bread", "name": "Хлеб Бородинский", "unit": "шт", "barcode": "2000000000011", "sku": "BRD-001", "purchasePrice": 32, "salePrice": 45, "stockByStore": { "store-urozhai-main": 42 } },
+        { "id": "milk-32", "categoryId": "dairy", "name": "Молоко 3.2%", "unit": "шт", "barcode": "2000000000028", "sku": "DRY-101", "purchasePrice": 52, "salePrice": 68, "stockByStore": { "store-urozhai-main": 36 } },
+        { "id": "coffee-jockey", "categoryId": "grocery", "name": "Кофе Жокей", "unit": "шт", "barcode": "2000000000035", "sku": "GRC-220", "purchasePrice": 165, "salePrice": 210, "stockByStore": { "store-urozhai-main": 18 } },
+        { "id": "sugar", "categoryId": "grocery", "name": "Сахар 1 кг", "unit": "шт", "barcode": "2000000000042", "sku": "GRC-115", "purchasePrice": 64, "salePrice": 82, "stockByStore": { "store-urozhai-main": 55 } },
+        { "id": "tea-black", "categoryId": "grocery", "name": "Чай черный 100 г", "unit": "шт", "barcode": "2000000000059", "sku": "GRC-118", "purchasePrice": 73, "salePrice": 96, "stockByStore": { "store-urozhai-main": 27 } },
+        { "id": "water", "categoryId": "drinks", "name": "Вода 1.5 л", "unit": "шт", "barcode": "2000000000066", "sku": "DRN-010", "purchasePrice": 24, "salePrice": 38, "stockByStore": { "store-urozhai-main": 80 } },
+        { "id": "apples", "categoryId": "produce", "name": "Яблоки Голден", "unit": "кг", "barcode": "2000000000103", "sku": "FRU-012", "purchasePrice": 84, "salePrice": 118, "stockByStore": { "store-urozhai-main": 19 } }
+      ],
+      "stores": [
+        { "id": "store-urozhai-main", "name": "Урожай", "address": "г. Бишкек, ул. Ленина, 10", "status": "online", "license": "Профессиональная до 01.05.2027" }
+      ],
+      "registers": [
+        { "id": "reg-urozhai-1", "storeId": "store-urozhai-main", "name": "Касса 1", "device": "POS-терминал PAX A920", "status": "not_activated", "appVersion": "v2.14.1", "lastSyncAt": "2026-05-05T09:00:00.000Z" }
+      ],
+      "employees": [
+        { "id": "emp-urozhai-owner", "name": "Алексей Иванов", "role": "owner", "phone": "+996 700 123-456", "storeId": "store-urozhai-main", "status": "active", "lastShiftAt": "2026-05-05T08:30:00.000Z" },
+        { "id": "emp-urozhai-cashier", "name": "Елена Петрова", "role": "cashier", "phone": "+996 555 234-567", "storeId": "store-urozhai-main", "status": "active", "lastShiftAt": "2026-05-05T09:00:00.000Z" }
+      ],
+      "settings": {
+        "companyName": "Магазин Урожай",
+        "inn": "7712345678",
+        "address": "г. Бишкек, ул. Ленина, 10",
+        "currency": "сом",
+        "receiptTemplate": "Стандартный",
+        "showQr": false,
+        "taxRate": 12,
+        "mbankEnabled": true,
+        "telegramEnabled": true
+      },
+      "stockOperations": [],
+      "sales": [],
+      "updatedAt": "2026-05-05T09:00:00.000Z"
+    },
+    {
+      "id": "acc-textile",
+      "name": "Магазин Текстиль",
+      "ownerName": "Мария Соколова",
+      "activationKey": {
+        "key": "TEXT-2026-0001",
+        "status": "active",
+        "generatedAt": "2026-05-05T09:00:00.000Z"
+      },
+      "categories": [
+        { "id": "women", "name": "Женская одежда", "icon": "Shirt", "color": "#2563eb", "sortOrder": 1 },
+        { "id": "men", "name": "Мужская одежда", "icon": "Shirt", "color": "#0f766e", "sortOrder": 2 },
+        { "id": "kids", "name": "Детская одежда", "icon": "Shirt", "color": "#f97316", "sortOrder": 3 },
+        { "id": "accessories", "name": "Аксессуары", "icon": "ShoppingBasket", "color": "#7c3aed", "sortOrder": 4 }
+      ],
+      "products": [
+        { "id": "dress-linen", "categoryId": "women", "name": "Платье льняное", "unit": "шт", "barcode": "2001000000015", "sku": "WOM-101", "purchasePrice": 1200, "salePrice": 1890, "stockByStore": { "store-textile-main": 9 } },
+        { "id": "shirt-basic", "categoryId": "men", "name": "Рубашка базовая", "unit": "шт", "barcode": "2001000000022", "sku": "MEN-112", "purchasePrice": 850, "salePrice": 1390, "stockByStore": { "store-textile-main": 14 } },
+        { "id": "jeans-classic", "categoryId": "men", "name": "Джинсы классические", "unit": "шт", "barcode": "2001000000039", "sku": "MEN-210", "purchasePrice": 1450, "salePrice": 2290, "stockByStore": { "store-textile-main": 7 } },
+        { "id": "kids-hoodie", "categoryId": "kids", "name": "Худи детское", "unit": "шт", "barcode": "2001000000046", "sku": "KID-044", "purchasePrice": 720, "salePrice": 1190, "stockByStore": { "store-textile-main": 16 } },
+        { "id": "cap-summer", "categoryId": "accessories", "name": "Кепка летняя", "unit": "шт", "barcode": "2001000000053", "sku": "ACC-030", "purchasePrice": 220, "salePrice": 390, "stockByStore": { "store-textile-main": 23 } }
+      ],
+      "stores": [
+        { "id": "store-textile-main", "name": "Текстиль", "address": "г. Бишкек, ул. Киевская, 25", "status": "online", "license": "Базовая до 01.05.2027" }
+      ],
+      "registers": [
+        { "id": "reg-textile-1", "storeId": "store-textile-main", "name": "Касса 1", "device": "АТОЛ Sigma 10", "status": "not_activated", "appVersion": "v2.14.1", "lastSyncAt": "2026-05-05T09:00:00.000Z" }
+      ],
+      "employees": [
+        { "id": "emp-textile-owner", "name": "Мария Соколова", "role": "owner", "phone": "+996 700 555-111", "storeId": "store-textile-main", "status": "active", "lastShiftAt": "2026-05-05T08:40:00.000Z" },
+        { "id": "emp-textile-cashier", "name": "Николай Михайлов", "role": "cashier", "phone": "+996 555 678-900", "storeId": "store-textile-main", "status": "active", "lastShiftAt": "2026-05-05T09:10:00.000Z" }
+      ],
+      "settings": {
+        "companyName": "Магазин Текстиль",
+        "inn": "7712999001",
+        "address": "г. Бишкек, ул. Киевская, 25",
+        "currency": "сом",
+        "receiptTemplate": "Одежда",
+        "showQr": false,
+        "taxRate": 12,
+        "mbankEnabled": false,
+        "telegramEnabled": true
+      },
+      "stockOperations": [],
+      "sales": [],
+      "updatedAt": "2026-05-05T09:00:00.000Z"
+    }
+  ]
+}
