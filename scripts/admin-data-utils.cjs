@@ -405,17 +405,71 @@ function makeCashSnapshot(account, register, activationKey) {
   };
 }
 
-function appendSale(account, sale) {
-  if (sale && !account.sales.some((item) => item.id === sale.id)) {
-    account.sales.unshift(sale);
-    const stockSign = sale.type === "return" ? 1 : -1;
-    for (const saleItem of sale.items || []) {
-      const product = account.products.find((item) => item.id === saleItem.productId);
-      if (product) {
-        product.stockByStore[sale.storeId] = (product.stockByStore[sale.storeId] || 0) + stockSign * saleItem.qty;
-      }
+function saleTimestampKey(value) {
+  const time = Date.parse(value || "");
+  return Number.isFinite(time) ? String(time) : String(value || "").replace(/[^a-zA-Z0-9_-]/g, "-");
+}
+
+function roundMoneyValue(value) {
+  return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+}
+
+function sameSale(left, right) {
+  if (!left || !right) return false;
+  return (
+    String(left.number || "") === String(right.number || "") &&
+    String(left.registerId || "") === String(right.registerId || "") &&
+    String(left.storeId || "") === String(right.storeId || "") &&
+    String(left.shiftId || "") === String(right.shiftId || "") &&
+    String(left.type || "sale") === String(right.type || "sale") &&
+    String(left.paymentMethod || "") === String(right.paymentMethod || "") &&
+    saleTimestampKey(left.createdAt) === saleTimestampKey(right.createdAt) &&
+    roundMoneyValue(left.total) === roundMoneyValue(right.total)
+  );
+}
+
+function makeCollisionSaleId(account, sale) {
+  const baseId = String(sale.id || `sale-${sale.registerId || "register"}-${sale.number || "receipt"}`);
+  const numberPart = String(sale.number || "receipt").replace(/[^a-zA-Z0-9_-]/g, "-");
+  const timePart = saleTimestampKey(sale.createdAt);
+  const collisionBase = `${baseId}-at-${numberPart}-${timePart}`;
+  let candidate = collisionBase;
+  let index = 2;
+  while ((account.sales || []).some((item) => item.id === candidate && !sameSale(item, sale))) {
+    candidate = `${collisionBase}-${index}`;
+    index += 1;
+  }
+  return candidate;
+}
+
+function applySaleStock(account, sale) {
+  const stockSign = sale.type === "return" ? 1 : -1;
+  for (const saleItem of sale.items || []) {
+    const product = (account.products || []).find((item) => item.id === saleItem.productId);
+    if (product) {
+      product.stockByStore = product.stockByStore || {};
+      product.stockByStore[sale.storeId] = (product.stockByStore[sale.storeId] || 0) + stockSign * saleItem.qty;
     }
   }
+}
+
+function appendSale(account, sale) {
+  if (!sale) {
+    return;
+  }
+  account.sales = account.sales || [];
+  const existingSame = account.sales.find((item) => item.id === sale.id || sameSale(item, sale));
+  if (existingSame && sameSale(existingSame, sale)) {
+    return;
+  }
+  const saleToStore = existingSame
+    ? { ...sale, id: makeCollisionSaleId(account, sale), originalSyncId: sale.id }
+    : sale;
+  if (account.sales.some((item) => sameSale(item, saleToStore))) {
+    return;
+  }
+  account.sales.unshift(saleToStore);
+  applySaleStock(account, saleToStore);
 }
 
 function appendDebtTransaction(account, transaction) {

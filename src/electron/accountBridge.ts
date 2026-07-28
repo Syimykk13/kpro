@@ -73,6 +73,43 @@ async function postServer<T>(apiPath: string, payload: unknown): Promise<T> {
   return readJsonResponse<T>(response);
 }
 
+function saleTimestampKey(value?: string) {
+  const time = Date.parse(value || "");
+  return Number.isFinite(time) ? String(time) : String(value || "").replace(/[^a-zA-Z0-9_-]/g, "-");
+}
+
+function roundSaleMoney(value?: number) {
+  return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+}
+
+function sameSale(left?: AdminSale, right?: AdminSale) {
+  if (!left || !right) return false;
+  return (
+    String(left.number || "") === String(right.number || "") &&
+    String(left.registerId || "") === String(right.registerId || "") &&
+    String(left.storeId || "") === String(right.storeId || "") &&
+    String(left.shiftId || "") === String(right.shiftId || "") &&
+    String(left.type || "sale") === String(right.type || "sale") &&
+    String(left.paymentMethod || "") === String(right.paymentMethod || "") &&
+    saleTimestampKey(left.createdAt) === saleTimestampKey(right.createdAt) &&
+    roundSaleMoney(left.total) === roundSaleMoney(right.total)
+  );
+}
+
+function collisionSaleId(account: AdminAccount, sale: AdminSale) {
+  const baseId = String(sale.id || `sale-${sale.registerId || "register"}-${sale.number || "receipt"}`);
+  const numberPart = String(sale.number || "receipt").replace(/[^a-zA-Z0-9_-]/g, "-");
+  const timePart = saleTimestampKey(sale.createdAt);
+  const collisionBase = `${baseId}-at-${numberPart}-${timePart}`;
+  let candidate = collisionBase;
+  let index = 2;
+  while ((account.sales ?? []).some((item) => item.id === candidate && !sameSale(item, sale))) {
+    candidate = `${collisionBase}-${index}`;
+    index += 1;
+  }
+  return candidate;
+}
+
 async function getServer<T>(apiPath: string): Promise<T> {
   const baseUrl = serverUrl();
   if (!baseUrl) {
@@ -308,19 +345,27 @@ export function appendSaleToAccount(accountId: string, sale: AdminSale) {
 
     const snapshot = readAdminSnapshot();
     const account = snapshot.accounts.find((item) => item.id === accountId);
-    if (!account || account.sales.some((item) => item.id === sale.id)) {
+    if (!account) {
       return;
     }
-    account.sales.unshift(sale);
-    const stockSign = sale.type === "return" ? 1 : -1;
-    for (const saleItem of sale.items) {
+    const existingSame = account.sales.some((item) => sameSale(item, sale));
+    if (existingSame) {
+      return;
+    }
+    const idCollision = account.sales.some((item) => item.id === sale.id);
+    const saleToStore = idCollision
+      ? ({ ...sale, id: collisionSaleId(account, sale), originalSyncId: sale.id } as AdminSale)
+      : sale;
+    account.sales.unshift(saleToStore);
+    const stockSign = saleToStore.type === "return" ? 1 : -1;
+    for (const saleItem of saleToStore.items) {
       const product = account.products.find((item) => item.id === saleItem.productId);
       if (product) {
-        product.stockByStore[sale.storeId] = (product.stockByStore[sale.storeId] ?? 0) + stockSign * saleItem.qty;
+        product.stockByStore[saleToStore.storeId] = (product.stockByStore[saleToStore.storeId] ?? 0) + stockSign * saleItem.qty;
       }
     }
     const timestamp = new Date().toISOString();
-    const register = account.registers.find((item) => item.id === sale.registerId);
+    const register = account.registers.find((item) => item.id === saleToStore.registerId);
     if (register) {
       register.lastSyncAt = timestamp;
       register.status = "online";

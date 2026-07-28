@@ -241,6 +241,7 @@ export type AdminSaleItem = {
 
 export type AdminSale = {
   id: string;
+  originalSyncId?: string;
   number: string;
   shiftId: string;
   accountId: string;

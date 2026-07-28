@@ -1066,8 +1066,10 @@ export class KassaDatabase {
     }
     const costTotal = roundMoney(items.reduce((sum, item) => sum + (item.purchasePrice ?? 0) * item.qty, 0));
     const isReturn = receipt.status === "returned";
+    const saleTime = Number.isFinite(Date.parse(receipt.createdAt)) ? Date.parse(receipt.createdAt) : Date.now();
+    const saleId = `sale-${binding.registerId}-${receipt.number}-${saleTime}-${receipt.id}`;
     const sale: AdminSale = {
-      id: `sale-${binding.registerId}-${receipt.id}`,
+      id: saleId,
       number: receipt.number,
       shiftId: `${binding.registerId}-${receipt.shiftId}`,
       accountId: binding.accountId,
