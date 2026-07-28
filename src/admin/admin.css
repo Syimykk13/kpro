@@ -388,6 +388,8 @@ h2 {
 
 .admin-table {
   display: grid;
+  align-content: start;
+  grid-auto-rows: max-content;
   overflow: auto;
   border: 1px solid #e2e9f1;
   border-radius: 8px;
@@ -424,11 +426,21 @@ h2 {
 .products-table .admin-row {
   grid-template-columns: 34px minmax(180px, 1.3fr) 150px 110px 110px 110px 98px;
   min-width: 840px;
+  min-height: 58px;
+  height: auto;
 }
 
 .products-table.no-purchase .admin-row {
   grid-template-columns: 34px minmax(180px, 1.3fr) 150px 110px 110px 98px;
   min-width: 720px;
+}
+
+.products-table .admin-row strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.25;
 }
 
 .products-table input[type="checkbox"] {

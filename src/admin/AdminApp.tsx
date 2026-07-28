@@ -2695,13 +2695,32 @@ function HomeDashboard({
     .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
   const saleReceipts = sales.filter((sale) => (sale.type ?? "sale") !== "return");
   const returns = sales.filter((sale) => (sale.type ?? "sale") === "return");
-  const totalSales = saleReceipts.reduce((sum, sale) => sum + sale.total, 0);
-  const totalReturns = returns.reduce((sum, sale) => sum + sale.total, 0);
-  const revenue = roundAdmin(totalSales - totalReturns);
+  const now = new Date();
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const dayEnd = dayStart + 24 * 60 * 60 * 1000 - 1;
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
+  const inRange = (sale: AdminSale, from: number, to: number) => {
+    const createdAt = new Date(sale.createdAt).getTime();
+    return Number.isFinite(createdAt) && createdAt >= from && createdAt <= to;
+  };
+  const todaySales = saleReceipts.filter((sale) => inRange(sale, dayStart, dayEnd));
+  const todayReturns = returns.filter((sale) => inRange(sale, dayStart, dayEnd));
+  const monthSales = saleReceipts.filter((sale) => inRange(sale, monthStart, monthEnd));
+  const monthReturns = returns.filter((sale) => inRange(sale, monthStart, monthEnd));
+  const todayRevenue = roundAdmin(
+    todaySales.reduce((sum, sale) => sum + sale.total, 0) -
+      todayReturns.reduce((sum, sale) => sum + sale.total, 0)
+  );
+  const monthRevenue = roundAdmin(
+    monthSales.reduce((sum, sale) => sum + sale.total, 0) -
+      monthReturns.reduce((sum, sale) => sum + sale.total, 0)
+  );
+  const monthAverageReceipt = monthSales.length ? roundAdmin(monthRevenue / monthSales.length) : 0;
   const paymentTotals = {
-    cash: sumSalesByMethod(saleReceipts, "cash"),
-    card: sumSalesByMethod(saleReceipts, "card"),
-    qr: sumSalesByMethod(saleReceipts, "qr")
+    cash: sumSalesByMethod(todaySales, "cash"),
+    card: sumSalesByMethod(todaySales, "card"),
+    qr: sumSalesByMethod(todaySales, "qr")
   };
   const paymentTotal = Math.max(1, paymentTotals.cash + paymentTotals.card + paymentTotals.qr);
   const lowStockProducts = account.products
@@ -2715,14 +2734,14 @@ function HomeDashboard({
     <div className="mobile-dashboard">
       <section className="mobile-hero-card">
         <div>
-          <span>Продажи всего</span>
-          <strong>{money(revenue)}</strong>
-          <em>{returns.length ? `Возвраты: ${money(totalReturns)}` : "Рабочая сводка"}</em>
+          <span>Продажи сегодня</span>
+          <strong>{money(todayRevenue)}</strong>
+          <em>{todaySales.length} чеков · {todayReturns.length ? `возвраты ${money(todayReturns.reduce((sum, sale) => sum + sale.total, 0))}` : store?.name ?? account.name}</em>
         </div>
         <div>
-          <span>Чеков</span>
-          <strong>{saleReceipts.length}</strong>
-          <em>{store?.name ?? account.name}</em>
+          <span>За месяц</span>
+          <strong>{money(monthRevenue)}</strong>
+          <em>Средний чек: {money(monthAverageReceipt)}</em>
         </div>
       </section>
 
@@ -2739,7 +2758,7 @@ function HomeDashboard({
             background: `conic-gradient(#31c986 0 ${paymentTotals.cash / paymentTotal * 100}%, #147adf 0 ${(paymentTotals.cash + paymentTotals.card) / paymentTotal * 100}%, #8b5cf6 0 100%)`
           }}
         >
-          <span>{money(revenue).replace(" сом", "")}<small>сом</small></span>
+          <span>{money(todayRevenue).replace(" сом", "")}<small>сом</small></span>
         </div>
       </section>
 
