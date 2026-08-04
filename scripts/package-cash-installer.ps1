@@ -4,7 +4,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$Version = "1.1.15"
+$Version = "1.1.16"
 $ServerUrl = "http://132.243.114.107:5173"
 $ProjectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $ReleaseRoot = Join-Path $ProjectRoot "release"

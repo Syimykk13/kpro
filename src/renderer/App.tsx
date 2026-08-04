@@ -2763,7 +2763,7 @@ function QrPaymentDialog({
   useEffect(() => {
     const timer = window.setInterval(() => {
       void checkStatus();
-    }, 2500);
+    }, 1000);
     void checkStatus();
     return () => window.clearInterval(timer);
   }, [checkStatus]);
