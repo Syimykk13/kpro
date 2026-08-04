@@ -219,7 +219,10 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === "POST" && pathname === "/api/kompanion/qr/callback") {
+    if (
+      req.method === "POST" &&
+      (pathname === "/api/kompanion/qr/callback" || pathname === "/api/payments/kompanion/webhook")
+    ) {
       try {
         const payload = await readBody(req);
         const order = handleKompanionWebhook(dataDir, payload);

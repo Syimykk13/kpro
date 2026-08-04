@@ -242,7 +242,10 @@ async function handleApi(req, res, pathname) {
     return true;
   }
 
-  if (req.method === "POST" && pathname === "/api/kompanion/qr/callback") {
+  if (
+    req.method === "POST" &&
+    (pathname === "/api/kompanion/qr/callback" || pathname === "/api/payments/kompanion/webhook")
+  ) {
     try {
       const payload = await readBody(req);
       const order = handleKompanionWebhook(dataDir, payload);
