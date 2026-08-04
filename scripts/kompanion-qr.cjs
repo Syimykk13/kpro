@@ -24,6 +24,19 @@ function writeQrOrders(dataDir, orders) {
   fs.writeFileSync(qrOrdersFile(dataDir), JSON.stringify(orders, null, 2), "utf8");
 }
 
+function qrWebhookLogFile(dataDir) {
+  return path.join(dataDir, "kompanion-qr-webhooks.log");
+}
+
+function appendWebhookLog(dataDir, entry) {
+  try {
+    fs.mkdirSync(dataDir, { recursive: true });
+    fs.appendFileSync(qrWebhookLogFile(dataDir), `${JSON.stringify({ at: new Date().toISOString(), ...entry })}\n`, "utf8");
+  } catch {
+    // Webhook logging is diagnostic only.
+  }
+}
+
 function getConfig() {
   return {
     baseUrl: (process.env.KOMPANION_QR_BASE_URL || "").replace(/\/+$/, ""),
@@ -66,6 +79,17 @@ function sign(config, txnId, amountTyiyn) {
     .createHash("sha256")
     .update(`${config.merchantId}${txnId}${amountTyiyn}${config.secret}`)
     .digest("hex");
+}
+
+function uniqueTruthy(values) {
+  return values.map((value) => String(value || "").trim()).filter((value, index, list) => value && list.indexOf(value) === index);
+}
+
+function normalizeOrderStatus(status) {
+  const value = String(status || "").trim().toUpperCase();
+  if (["PAID", "PAYED", "COMPLETED", "COMPLETE", "APPROVED"].includes(value)) return "SUCCESS";
+  if (["FAILED", "FAIL", "DECLINED", "CANCELED", "CANCELLED"].includes(value)) return "ERROR";
+  return value || "PENDING";
 }
 
 function makeExternalId(registerId) {
@@ -162,11 +186,12 @@ function getQrOrderStatus(dataDir, txnId) {
 
 function handleKompanionWebhook(dataDir, payload) {
   const txnId = String(payload?.txnId || "");
-  const status = String(payload?.status || "");
+  const status = normalizeOrderStatus(payload?.status);
   const receivedSign = String(payload?.sign || "");
   const orders = readQrOrders(dataDir);
   const index = orders.findIndex((item) => item.txnId === txnId || item.externalId === txnId);
   if (index < 0) {
+    appendWebhookLog(dataDir, { ok: false, reason: "order_not_found", txnId, payload });
     const error = new Error("QR-заказ не найден.");
     error.statusCode = 404;
     throw error;
@@ -174,8 +199,18 @@ function handleKompanionWebhook(dataDir, payload) {
   const config = getConfig();
   assertConfigured(config);
   const order = orders[index];
-  const expectedSign = sign(config, order.txnId || order.externalId, order.amountTyiyn);
-  if (expectedSign !== receivedSign) {
+  const signTxnIds = uniqueTruthy([txnId, order.txnId, order.externalId]);
+  const signAmounts = uniqueTruthy([payload?.amount, payload?.amountTyiyn, order.amountTyiyn]);
+  const expectedSigns = signTxnIds.flatMap((id) => signAmounts.map((amount) => sign(config, id, amount)));
+  if (!receivedSign || !expectedSigns.some((expectedSign) => expectedSign.toLowerCase() === receivedSign.toLowerCase())) {
+    appendWebhookLog(dataDir, {
+      ok: false,
+      reason: "bad_signature",
+      txnId,
+      expectedTxnIds: signTxnIds,
+      expectedAmounts: signAmounts,
+      payload
+    });
     const error = new Error("Неверная подпись QR webhook.");
     error.statusCode = 403;
     throw error;
@@ -188,6 +223,7 @@ function handleKompanionWebhook(dataDir, payload) {
     updatedAt: now
   };
   writeQrOrders(dataDir, orders);
+  appendWebhookLog(dataDir, { ok: true, txnId, status, orderId: order.externalId });
   return orders[index];
 }
 

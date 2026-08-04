@@ -2695,10 +2695,9 @@ function QrPaymentDialog({
   const [status, setStatus] = useState(order.status || "PENDING");
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
-  const [qrMode, setQrMode] = useState<"payment" | "link">("payment");
   const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const paymentUrl = order.paymentUrl || order.qrUrl;
-  const qrPayload = qrMode === "payment" ? getQrPaymentPayload(order) : getQrPaymentLinkPayload(order);
+  const qrPayload = getQrPaymentLinkPayload(order);
 
   useEffect(() => {
     const canvas = qrCanvasRef.current;
@@ -2772,15 +2771,7 @@ function QrPaymentDialog({
           <X size={18} />
         </button>
         <h2>QR оплата</h2>
-        <p>Попросите клиента отсканировать QR-код с экрана.</p>
-        <div className="qr-payment-mode">
-          <button className={qrMode === "payment" ? "active" : ""} type="button" onClick={() => setQrMode("payment")}>
-            QR для оплаты
-          </button>
-          <button className={qrMode === "link" ? "active" : ""} type="button" onClick={() => setQrMode("link")}>
-            QR ссылка банка
-          </button>
-        </div>
+        <p>Попросите клиента отсканировать QR-ссылку банка с экрана.</p>
         <div className="qr-payment-frame">
           {qrPayload ? (
             <canvas ref={qrCanvasRef} className="qr-payment-canvas" aria-label="QR код оплаты" />

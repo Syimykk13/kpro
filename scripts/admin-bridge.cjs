@@ -87,6 +87,9 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
+    const requestUrl = new URL(req.url || "/", "http://localhost");
+    const pathname = requestUrl.pathname;
+
     if (req.method === "GET" && req.url === "/api/snapshot") {
       send(res, 200, readSnapshot());
       return;
@@ -179,7 +182,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === "POST" && req.url === "/api/kompanion/qr/create") {
+    if (req.method === "POST" && pathname === "/api/kompanion/qr/create") {
       const input = await readBody(req);
       const snapshot = readSnapshot();
       const account = snapshot.accounts.find((item) => item.id === input.accountId);
@@ -206,8 +209,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === "GET" && req.url?.startsWith("/api/kompanion/qr/status/")) {
-      const requestUrl = new URL(req.url, "http://localhost");
+    if (req.method === "GET" && pathname.startsWith("/api/kompanion/qr/status/")) {
       const txnId = decodeURIComponent(requestUrl.pathname.split("/").pop() || "");
       try {
         send(res, 200, { ok: true, order: getQrOrderStatus(dataDir, txnId) });
@@ -217,7 +219,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === "POST" && req.url === "/api/kompanion/qr/callback") {
+    if (req.method === "POST" && pathname === "/api/kompanion/qr/callback") {
       try {
         const payload = await readBody(req);
         const order = handleKompanionWebhook(dataDir, payload);
@@ -228,8 +230,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === "GET" && req.url?.startsWith("/api/account-snapshot/")) {
-      const requestUrl = new URL(req.url, "http://localhost");
+    if (req.method === "GET" && pathname.startsWith("/api/account-snapshot/")) {
       const accountId = decodeURIComponent(requestUrl.pathname.split("/").pop() || "");
       const registerId = requestUrl.searchParams.get("registerId") || "";
       const activationKey = requestUrl.searchParams.get("activationKey") || "";
