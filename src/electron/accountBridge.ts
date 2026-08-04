@@ -45,6 +45,7 @@ const seedFile = () => path.join(projectRoot, "src", "shared", "adminSeedData.js
 const UNCATEGORIZED_CATEGORY_ID = "uncategorized";
 const UNCATEGORIZED_CATEGORY_NAME_SAFE = "Без категории";
 const UNCATEGORIZED_CATEGORY_NAME = "Без категории";
+const SERVER_REQUEST_TIMEOUT_MS = 12000;
 
 function serverUrl() {
   const value = process.env.KASSA_PRO_SERVER_URL?.trim();
@@ -65,12 +66,27 @@ async function postServer<T>(apiPath: string, payload: unknown): Promise<T> {
   if (!baseUrl) {
     throw new Error("Сервер синхронизации не настроен.");
   }
-  const response = await fetch(`${baseUrl}${apiPath}`, {
+  const response = await fetchWithTimeout(`${baseUrl}${apiPath}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
   return readJsonResponse<T>(response);
+}
+
+async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SERVER_REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Сервер долго не отвечает. Попробуйте еще раз.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function saleTimestampKey(value?: string) {
@@ -115,7 +131,7 @@ async function getServer<T>(apiPath: string): Promise<T> {
   if (!baseUrl) {
     throw new Error("Сервер синхронизации не настроен.");
   }
-  const response = await fetch(`${baseUrl}${apiPath}`);
+  const response = await fetchWithTimeout(`${baseUrl}${apiPath}`);
   return readJsonResponse<T>(response);
 }
 

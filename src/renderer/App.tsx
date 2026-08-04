@@ -2695,6 +2695,7 @@ function QrPaymentDialog({
   const [status, setStatus] = useState(order.status || "PENDING");
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
+  const checkingRef = useRef(false);
   const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const paymentUrl = order.paymentUrl || order.qrUrl;
   const qrPayload = getQrPaymentLinkPayload(order);
@@ -2735,26 +2736,29 @@ function QrPaymentDialog({
   }, [qrPayload]);
 
   const checkStatus = useCallback(async () => {
-    if (checking || completing) {
+    if (checkingRef.current || completing) {
       return;
     }
+    checkingRef.current = true;
     setChecking(true);
     try {
       const fresh = await window.kassaApi.qr.getStatus(order.txnId);
-      setStatus(fresh.status);
+      const freshStatus = String(fresh.status || "").toUpperCase();
+      setStatus(freshStatus);
       setError("");
-      if (fresh.status === "SUCCESS") {
+      if (freshStatus === "SUCCESS") {
         onPaid();
       }
-      if (fresh.status === "ERROR" || fresh.status === "EXPIRED") {
-        setError(fresh.status === "EXPIRED" ? "Срок QR оплаты истек." : "Банк вернул ошибку оплаты.");
+      if (freshStatus === "ERROR" || freshStatus === "EXPIRED") {
+        setError(freshStatus === "EXPIRED" ? "Срок QR оплаты истек." : "Банк вернул ошибку оплаты.");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Не удалось проверить QR оплату.");
     } finally {
+      checkingRef.current = false;
       setChecking(false);
     }
-  }, [checking, completing, onPaid, order.txnId]);
+  }, [completing, onPaid, order.txnId]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
