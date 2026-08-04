@@ -1347,6 +1347,9 @@ function ProductsPage({
   const currentStoreId = account.stores.some((store) => store.id === storeId) ? storeId : account.stores[0]?.id ?? "";
   const currentStore = account.stores.find((store) => store.id === currentStoreId);
   const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [stateFilter, setStateFilter] = useState("all");
+  const [productPage, setProductPage] = useState(1);
   const [draft, setDraft] = useState<Partial<AdminProduct>>({});
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -1360,21 +1363,65 @@ function ProductsPage({
       UNCATEGORIZED_CATEGORY_ID
   );
 
-  const products = account.products.filter((product) => {
-    const value = query.toLowerCase();
+  const pageSize = 50;
+  const orderedCategories = categoriesForStore(account, currentStoreId);
+  const isInternalBarcode = (barcode?: string) => {
+    const digits = normalizeBarcode(barcode ?? "");
+    return !digits || digits.startsWith("20");
+  };
+  const matchesStateFilter = (product: AdminProduct) => {
+    const stock = stockOf(account, product, currentStoreId);
+    if (stateFilter === "no_barcode") return isInternalBarcode(product.barcode);
+    if (stateFilter === "negative_stock") return stock < -0.0009;
+    if (stateFilter === "zero_stock") return Math.abs(stock) <= 0.0009;
+    if (stateFilter === "low_stock") return stock > 0 && stock <= 5;
+    return true;
+  };
+  const filteredProducts = account.products.filter((product) => {
+    const value = query.trim().toLowerCase();
     const extraBarcodes = product.extraBarcodes ?? [];
+    const productCategoryId = product.categoryId || UNCATEGORIZED_CATEGORY_ID;
+    const matchesQuery =
+      !value ||
+      product.name.toLowerCase().includes(value) ||
+      product.barcode.includes(value) ||
+      extraBarcodes.some((barcode) => barcode.includes(value)) ||
+      product.sku.toLowerCase().includes(value);
+    const matchesCategory =
+      categoryFilter === "all" ||
+      productCategoryId === categoryFilter ||
+      (categoryFilter === UNCATEGORIZED_CATEGORY_ID && !orderedCategories.some((category) => category.id === product.categoryId));
     return (
       !product.isDeleted &&
       productAvailableInStore(account, product, currentStoreId) &&
-      (product.name.toLowerCase().includes(value) ||
-        product.barcode.includes(value) ||
-        extraBarcodes.some((barcode) => barcode.includes(value)) ||
-        product.sku.toLowerCase().includes(value))
+      matchesQuery &&
+      matchesCategory &&
+      matchesStateFilter(product)
     );
   });
-  const selectedProducts = products.filter((product) => selectedProductIds.includes(product.id));
-  const allVisibleSelected = products.length > 0 && products.every((product) => selectedProductIds.includes(product.id));
-  const orderedCategories = categoriesForStore(account, currentStoreId);
+  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+  const safeProductPage = Math.min(productPage, pageCount);
+  const pageStartIndex = (safeProductPage - 1) * pageSize;
+  const pagedProducts = filteredProducts.slice(pageStartIndex, pageStartIndex + pageSize);
+  const selectedProducts = filteredProducts.filter((product) => selectedProductIds.includes(product.id));
+  const allVisibleSelected = pagedProducts.length > 0 && pagedProducts.every((product) => selectedProductIds.includes(product.id));
+  const firstVisibleProduct = filteredProducts.length ? pageStartIndex + 1 : 0;
+  const lastVisibleProduct = Math.min(pageStartIndex + pagedProducts.length, filteredProducts.length);
+  const paginationPages = Array.from({ length: pageCount }, (_, index) => index + 1).filter((page) => (
+    page === 1 ||
+    page === pageCount ||
+    Math.abs(page - safeProductPage) <= 2
+  ));
+
+  useEffect(() => {
+    setProductPage(1);
+  }, [query, categoryFilter, stateFilter, currentStoreId]);
+
+  useEffect(() => {
+    if (productPage > pageCount) {
+      setProductPage(pageCount);
+    }
+  }, [pageCount, productPage]);
 
   const saveProduct = () => {
     const barcode = normalizeBarcode(draft.barcode ?? "");
@@ -1445,7 +1492,12 @@ function ProductsPage({
   };
 
   const toggleAllVisibleProducts = (checked: boolean) => {
-    setSelectedProductIds(checked ? products.map((product) => product.id) : []);
+    const pageIds = pagedProducts.map((product) => product.id);
+    setSelectedProductIds((ids) =>
+      checked
+        ? Array.from(new Set([...ids, ...pageIds]))
+        : ids.filter((id) => !pageIds.includes(id))
+    );
   };
 
   const deleteSelectedProducts = () => {
@@ -1591,6 +1643,27 @@ function ProductsPage({
             </button>
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Название, ШК или SKU" />
           </div>
+          <div className="product-filter-bar">
+            <AdminStyledSelect
+              value={categoryFilter}
+              options={[
+                { value: "all", label: "Все категории" },
+                ...orderedCategories.map((category) => ({ value: category.id, label: category.name }))
+              ]}
+              onChange={setCategoryFilter}
+            />
+            <AdminStyledSelect
+              value={stateFilter}
+              options={[
+                { value: "all", label: "Все товары" },
+                { value: "no_barcode", label: "Без ШК" },
+                { value: "negative_stock", label: "С отрицательным остатком" },
+                { value: "zero_stock", label: "С нулевым остатком" },
+                { value: "low_stock", label: "С низким остатком" }
+              ]}
+              onChange={setStateFilter}
+            />
+          </div>
           <div className="admin-inline-actions">
             <button className="secondary-admin" type="button" onClick={() => setImportModalOpen(true)}>
               <Upload size={17} />
@@ -1634,7 +1707,7 @@ function ProductsPage({
             <span>Остаток</span>
             <span />
           </div>
-          {products.map((product) => (
+          {pagedProducts.map((product) => (
             <div className="admin-row" key={product.id}>
               <span>
                 <input
@@ -1653,6 +1726,40 @@ function ProductsPage({
               </button>
             </div>
           ))}
+          {filteredProducts.length === 0 && (
+            <div className="admin-empty-row">
+              Товары не найдены
+            </div>
+          )}
+        </div>
+        <div className="products-pagination">
+          <span>
+            Показано {firstVisibleProduct}-{lastVisibleProduct} из {filteredProducts.length}
+            {selectedProducts.length > 0 ? ` · выбрано ${selectedProducts.length}` : ""}
+          </span>
+          <div>
+            <button type="button" disabled={safeProductPage <= 1} onClick={() => setProductPage((page) => Math.max(1, page - 1))}>
+              Назад
+            </button>
+            {paginationPages.map((page, index) => {
+              const previous = paginationPages[index - 1];
+              return (
+                <span className="pagination-page-slot" key={page}>
+                  {previous && page - previous > 1 && <em>...</em>}
+                  <button
+                    type="button"
+                    className={page === safeProductPage ? "active" : ""}
+                    onClick={() => setProductPage(page)}
+                  >
+                    {page}
+                  </button>
+                </span>
+              );
+            })}
+            <button type="button" disabled={safeProductPage >= pageCount} onClick={() => setProductPage((page) => Math.min(pageCount, page + 1))}>
+              Вперед
+            </button>
+          </div>
         </div>
       </section>
 

@@ -337,6 +337,14 @@ button {
   grid-column: span 1;
 }
 
+.products-page {
+  align-items: start;
+}
+
+.products-page > .admin-card {
+  align-content: start;
+}
+
 .card-head {
   display: flex;
   align-items: center;
@@ -384,6 +392,12 @@ h2 {
   padding: 0;
   border: 0;
   background: transparent;
+}
+
+.product-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(170px, 220px) minmax(170px, 240px);
+  gap: 10px;
 }
 
 .admin-table {
@@ -447,6 +461,59 @@ h2 {
   width: 18px;
   height: 18px;
   accent-color: #147adf;
+}
+
+.admin-empty-row {
+  display: grid;
+  place-items: center;
+  min-height: 92px;
+  padding: 18px;
+  color: #6b7f98;
+  font-weight: 850;
+}
+
+.products-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #58708c;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.products-pagination > div,
+.pagination-page-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.products-pagination button {
+  min-width: 36px;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid #d7e6f6;
+  border-radius: 8px;
+  color: #147adf;
+  background: #f3f8ff;
+  font-weight: 900;
+}
+
+.products-pagination button.active {
+  color: #fff;
+  border-color: #147adf;
+  background: #147adf;
+}
+
+.products-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.products-pagination em {
+  color: #7b8da3;
+  font-style: normal;
 }
 
 .employees-table .admin-row,
@@ -2162,6 +2229,19 @@ h2 {
   .install-banner {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .product-filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .products-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .products-pagination > div {
+    flex-wrap: wrap;
   }
 
   .admin-table {
