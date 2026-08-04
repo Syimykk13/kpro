@@ -1,6 +1,6 @@
 {
   "name": "kassa-pro-desktop",
-  "version": "1.1.13",
+  "version": "1.1.14",
   "description": "Desktop POS prototype for retail stores.",
   "main": "dist-electron/electron/main.js",
   "private": true,
